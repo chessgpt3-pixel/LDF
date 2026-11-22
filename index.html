@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Study Hub — Matrix & Academic Edition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#000;color:#0f0;font-family:'Courier New',monospace;overflow:hidden}
+
+/* ══════════════════ MATRIX CANVAS BG ══════════════════ */
+#matrixCanvas{position:fixed;top:0;left:0;z-index:0;opacity:.35}
+
+/* ══════════════════ SCREENS ══════════════════ */
+.screen{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity .6s}
+.screen.hidden{opacity:0;pointer-events:none}
+
+/* ══════════════════ LOGIN SCREEN (MATRIX THEME) ══════════════════ */
+#loginScreen{background:rgba(0,0,0,.85);backdrop-filter:blur(4px);padding:20px}
+.logo-wrap{margin-bottom:22px;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.triangle-eye{position:relative;width:120px;height:104px;margin:auto}
+.triangle-eye svg{width:120px;height:104px;filter:drop-shadow(0 0 18px #0f0) drop-shadow(0 0 40px #0f08)}
+.eye-pulse{animation:eyePulse 2.5s ease-in-out infinite}
+@keyframes eyePulse{0%,100%{opacity:.7;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
+.rays{animation:rotateSlow 12s linear infinite;transform-origin:60px 52px}
+@keyframes rotateSlow{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.login-title{font-size:28px;color:#0f0;text-align:center;text-shadow:0 0 20px #0f0;letter-spacing:4px;margin-bottom:4px;font-weight:bold}
+.login-sub{font-size:12px;color:#0a0;letter-spacing:2px;margin-bottom:10px;text-align:center}
+.course-banner{font-size:13px;color:#0ff;letter-spacing:3px;text-align:center;text-shadow:0 0 12px rgba(0,255,255,.6);border:1px solid rgba(0,255,255,.35);background:rgba(0,30,35,.65);padding:7px 16px;border-radius:999px;margin-bottom:24px;font-weight:bold}
+.card{background:rgba(0,20,0,.9);border:1px solid #0f04;border-radius:16px;padding:30px;width:min(380px,90vw);box-shadow:0 0 40px #0f02,inset 0 0 40px #0f01}
+.card label{display:block;font-size:11px;color:#0a0;letter-spacing:2px;margin:14px 0 6px}
+.card input{width:100%;background:#001a00;border:1px solid #0f06;border-radius:8px;padding:11px 14px;color:#0f0;font-family:'Courier New',monospace;font-size:14px;outline:none}
+.card input:focus{border-color:#0f0;box-shadow:0 0 12px #0f04}
+.card button{width:100%;margin-top:20px;padding:12px;background:linear-gradient(135deg,#003300,#005500);border:1px solid #0f0;border-radius:8px;color:#0f0;font-family:'Courier New',monospace;font-size:14px;font-weight:bold;letter-spacing:2px;cursor:pointer;transition:.2s}
+.card button:hover{background:linear-gradient(135deg,#005500,#00aa00);box-shadow:0 0 20px #0f04}
+.login-err{min-height:18px;margin-top:10px;color:#f44;font-size:12px;text-align:center}
+
+/* Corner Sponsor Badge on Login Screen */
+.sponsor-badge{position:fixed;bottom:16px;right:18px;z-index:20;background:rgba(0,20,0,.9);border:1px solid #0f06;border-radius:10px;padding:8px 14px;color:#0f0;font-size:11px;letter-spacing:1.2px;box-shadow:0 0 16px rgba(0,255,0,.25);display:flex;align-items:center;gap:8px}
+.sponsor-badge span.dot{width:7px;height:7px;border-radius:50%;background:#0f0;box-shadow:0 0 8px #0f0;display:inline-block}
+
+/* ══════════════════ MATRIX TRANSITION ══════════════════ */
+#transitionScreen{background:#000;flex-direction:column;gap:24px}
+.trans-logo{animation:eyePulse 1s ease-in-out infinite}
+.trans-text{font-size:22px;letter-spacing:8px;color:#0f0;text-shadow:0 0 30px #0f0;animation:glitch 2s infinite;text-align:center;padding:0 16px}
+@keyframes glitch{
+  0%,96%{transform:none;text-shadow:0 0 30px #0f0}
+  97%{transform:translate(-2px,1px);text-shadow:-2px 0 #f0f,2px 0 #0ff}
+  98%{transform:translate(2px,-1px);text-shadow:2px 0 #f0f,-2px 0 #0ff}
+  99%{transform:none;text-shadow:0 0 30px #0f0}
+}
+.load-bar-wrap{width:300px;max-width:85vw;border:1px solid #0f06;border-radius:4px;height:8px;overflow:hidden}
+.load-bar-fill{height:100%;width:0%;background:linear-gradient(90deg,#030,#0f0,#030);border-radius:4px;transition:width .08s linear;box-shadow:0 0 10px #0f0}
+.load-pct{font-size:11px;color:#0a0;letter-spacing:2px;margin-top:8px}
+.matrix-chars{font-size:13px;color:#060;letter-spacing:3px;animation:flickerChars 1.5s infinite}
+@keyframes flickerChars{0%,100%{opacity:.4}50%{opacity:1}}
+
+/* ══════════════════ MAIN APP SHELL ══════════════════ */
+#appScreen{background:#f8fafc;flex-direction:column;align-items:stretch;justify-content:flex-start;overflow:hidden}
+.app-nav{background:rgba(0,15,0,.97);border-bottom:1px solid #0f04;padding:0 20px;display:flex;align-items:center;gap:4px;min-height:54px;flex-shrink:0;overflow-x:auto}
+.app-nav .brand{color:#0f0;font-size:16px;font-weight:bold;letter-spacing:3px;text-shadow:0 0 10px #0f0;margin-right:auto;white-space:nowrap;font-family:'Courier New',monospace}
+.nav-btn{background:none;border:none;color:#0a0;font-family:'Courier New',monospace;font-size:12px;letter-spacing:1px;padding:14px 14px;cursor:pointer;border-bottom:2px solid transparent;transition:.2s;white-space:nowrap}
+.nav-btn:hover,.nav-btn.active{color:#0f0;border-bottom-color:#0f0;text-shadow:0 0 8px #0f0}
+
+/* ══════════════════ LIGHT ACADEMIC THEME FOR CONTENT AREA ══════════════════ */
+.app-content{flex:1;overflow-y:auto;overflow-x:hidden;padding:0;background:linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%);color:#1e293b;font-family:'Inter',system-ui,-apple-system,sans-serif}
+.app-content::-webkit-scrollbar{width:8px}
+.app-content::-webkit-scrollbar-track{background:#f1f5f9}
+.app-content::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}
+.app-content::-webkit-scrollbar-thumb:hover{background:#94a3b8}
+
+/* ══════════════════ EDITOR BAR (LIGHT ACADEMIC THEME) ══════════════════ */
+.editor-bar{background:#ffffff;border-bottom:1px solid #e2e8f0;padding:10px 24px;display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap;font-family:'Inter',system-ui,sans-serif;box-shadow:0 1px 3px rgba(15,23,42,.04);z-index:5}
+.editor-bar span{font-size:12px;color:#475569;font-weight:500;margin-right:auto}
+.editor-bar .btn-sm{padding:6px 13px;font-size:12px}
+
+/* ══════════════════ SHARED LIGHT ACADEMIC BUTTONS & INPUTS ══════════════════ */
+.btn-sm{background:#ffffff;border:1px solid #cbd5e1;border-radius:8px;padding:9px 16px;color:#334155;font-family:'Inter',system-ui,sans-serif;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .18s ease;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.btn-sm:hover{background:#f8fafc;border-color:#6366f1;color:#4f46e5;transform:translateY(-1px);box-shadow:0 4px 10px rgba(99,102,241,.12)}
+.btn-primary{background:#4f46e5;border-color:#4f46e5;color:#ffffff}
+.btn-primary:hover{background:#4338ca;border-color:#4338ca;color:#ffffff;box-shadow:0 4px 12px rgba(79,70,229,.28)}
+.btn-emerald{background:#059669;border-color:#059669;color:#ffffff}
+.btn-emerald:hover{background:#047857;border-color:#047857;color:#ffffff;box-shadow:0 4px 12px rgba(5,150,105,.25)}
+.btn-danger{background:#fff1f2;border-color:#fecdd3;color:#e11d48}
+.btn-danger:hover{background:#ffe4e6;border-color:#fda4af;color:#be123c;box-shadow:0 4px 10px rgba(225,29,72,.12)}
+.btn-accept{background:#ecfdf5;border-color:#a7f3d0;color:#059669}
+.btn-accept:hover{background:#d1fae5;border-color:#6ee7b7;color:#047857}
+.btn-decline{background:#fff1f2;border-color:#fecdd3;color:#e11d48}
+.btn-decline:hover{background:#ffe4e6;border-color:#fda4af;color:#be123c}
+
+/* ══════════════════ PAGES (LIGHT ACADEMIC THEME) ══════════════════ */
+.page{display:none;padding:28px 24px 48px;max-width:1120px;margin:0 auto;animation:fadeIn .28s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.page-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:22px;padding-bottom:14px;border-bottom:2px solid #e2e8f0}
+.page-title{font-size:22px;font-weight:800;color:#0f172a;letter-spacing:-0.02em;display:flex;align-items:center;gap:10px}
+.page-subtitle{font-size:13px;color:#64748b;font-weight:500}
+
+/* ══════════════════ NOTES PAGE (LIGHT ACADEMIC THEME) ══════════════════ */
+.notes-nav{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px}
+.notes-nav button{background:#ffffff;border:1px solid #cbd5e1;border-radius:999px;padding:9px 18px;color:#475569;font-family:'Inter',system-ui,sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .18s ease;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.notes-nav button:hover{border-color:#6366f1;color:#4f46e5;background:#eef2ff}
+.notes-nav button.active{background:#4f46e5;border-color:#4f46e5;color:#ffffff;box-shadow:0 4px 12px rgba(79,70,229,.25)}
+.note-wrap{display:none}.note-wrap.on{display:block}
+.chapter-block{background:#ffffff;border:1px solid #e2e8f0;border-left:5px solid var(--ac,#4f46e5);border-radius:14px;padding:24px;margin-bottom:20px;box-shadow:0 4px 14px rgba(15,23,42,.04);transition:box-shadow .2s}
+.chapter-block:hover{box-shadow:0 8px 24px rgba(15,23,42,.07)}
+.chapter-block h2{font-size:18px;font-weight:700;color:#0f172a;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.chapter-block h3{font-size:14px;font-weight:700;color:#334155;margin:16px 0 8px;text-transform:uppercase;letter-spacing:.03em}
+.chapter-block p,.chapter-block li{font-size:14.5px;color:#334155;line-height:1.75}
+.chapter-block ul{padding-left:22px}
+.chapter-block li{margin:6px 0}
+.term{color:#0369a1;background:#e0f2fe;font-weight:600;padding:1px 7px;border-radius:5px;border:1px solid #bae6fd}
+.name{color:#6d28d9;background:#ede9fe;font-weight:600;padding:1px 7px;border-radius:5px;border:1px solid #ddd6fe}
+.year{color:#b45309;background:#fef3c7;font-weight:700;padding:1px 7px;border-radius:5px;border:1px solid #fde68a}
+.exam-box{background:#fffbeb;border:1px solid #fcd34d;border-left:4px solid #f59e0b;border-radius:10px;padding:13px 16px;margin-top:14px;font-size:13px;font-weight:600;color:#92400e}
+
+/* ══════════════════ FRIENDS PAGE (LIGHT ACADEMIC THEME) ══════════════════ */
+.friends-grid{display:grid;grid-template-columns:1fr;gap:22px}
+@media(min-width:820px){.friends-grid{grid-template-columns:1fr 1fr}}
+.friend-section{background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:22px;box-shadow:0 4px 14px rgba(15,23,42,.04);margin-bottom:20px}
+.section-label{font-size:12px;font-weight:700;color:#4f46e5;letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.invite-row{display:flex;gap:10px;flex-wrap:wrap}
+.invite-row input{flex:1;min-width:200px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:10px;padding:11px 14px;color:#0f172a;font-family:'Inter',system-ui,sans-serif;font-size:14px;outline:none;transition:.15s}
+.invite-row input:focus{border-color:#4f46e5;background:#ffffff;box-shadow:0 0 0 3px rgba(79,70,229,.12)}
+.friend-card{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:14px;transition:.18s}
+.friend-card:hover{background:#ffffff;border-color:#cbd5e1;box-shadow:0 4px 12px rgba(15,23,42,.05)}
+.friend-avatar{width:42px;height:42px;background:linear-gradient(135deg,#e0e7ff,#c7d2fe);border:1px solid #a5b4fc;color:#3730a3;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0}
+.friend-name{color:#0f172a;font-size:15px;font-weight:700}
+.friend-status{font-size:12px;color:#059669;font-weight:500;margin-top:2px}
+.invite-actions{display:flex;gap:8px;flex-wrap:wrap}
+.empty-msg{color:#64748b;font-size:13px;padding:22px;text-align:center;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:12px}
+
+/* ══════════════════ BLANK STUDY SPACE PAGE (LIGHT ACADEMIC THEME) ══════════════════ */
+.study-layout{display:grid;grid-template-columns:1fr;gap:22px}
+@media(min-width:920px){.study-layout{grid-template-columns:2.1fr 1fr}}
+.study-main-card{background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;box-shadow:0 4px 18px rgba(15,23,42,.05);overflow:hidden;display:flex;flex-direction:column}
+.blank-tabs-bar{background:#f1f5f9;border-bottom:1px solid #e2e8f0;padding:10px 14px;display:flex;align-items:center;gap:8px;overflow-x:auto}
+.blank-tab{background:#e2e8f0;border:1px solid transparent;border-radius:8px;padding:7px 14px;font-size:12.5px;font-weight:600;color:#475569;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap;transition:.15s}
+.blank-tab.active{background:#ffffff;color:#4f46e5;border-color:#cbd5e1;box-shadow:0 2px 6px rgba(15,23,42,.06)}
+.blank-tab .close-tab{font-size:14px;color:#94a3b8;line-height:1;padding:0 2px;border-radius:4px}
+.blank-tab .close-tab:hover{color:#e11d48;background:#ffe4e6}
+.study-toolbar{background:#ffffff;border-bottom:1px solid #e2e8f0;padding:10px 16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tool-btn{background:#f8fafc;border:1px solid #cbd5e1;border-radius:7px;padding:6px 11px;font-size:12.5px;font-weight:600;color:#334155;cursor:pointer;transition:.15s}
+.tool-btn:hover{background:#eef2ff;border-color:#6366f1;color:#4f46e5}
+.paper-select{background:#f8fafc;border:1px solid #cbd5e1;border-radius:7px;padding:6px 10px;font-size:12.5px;font-weight:600;color:#334155;outline:none;cursor:pointer}
+.blank-page-title-input{width:100%;border:none;border-bottom:1px solid #f1f5f9;padding:16px 24px 10px;font-size:20px;font-weight:800;color:#0f172a;font-family:'Inter',system-ui,sans-serif;outline:none;background:transparent}
+.blank-page-title-input::placeholder{color:#94a3b8}
+.blank-canvas{min-height:460px;padding:18px 24px 36px;font-size:15px;line-height:1.85;color:#1e293b;outline:none;background:#ffffff;flex:1}
+.blank-canvas:empty:before{content:attr(data-placeholder);color:#94a3b8;pointer-events:none;display:block}
+.blank-canvas.lined{background-image:linear-gradient(#e2e8f0 1px,transparent 1px);background-size:100% 30px;line-height:30px;padding-top:16px}
+.blank-canvas.grid{background-image:linear-gradient(to right,#f1f5f9 1px,transparent 1px),linear-gradient(to bottom,#f1f5f9 1px,transparent 1px);background-size:24px 24px}
+
+/* Study Room Sidebar */
+.study-side-card{background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:18px;box-shadow:0 4px 14px rgba(15,23,42,.04);margin-bottom:18px}
+.side-heading{font-size:13px;font-weight:700;color:#0f172a;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.partner-select{width:100%;background:#f8fafc;border:1px solid #cbd5e1;border-radius:10px;padding:10px 12px;font-size:13.5px;font-weight:600;color:#1e293b;outline:none;margin-bottom:10px}
+.partner-badge{background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;border-radius:10px;padding:10px 12px;font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:8px}
+.pulse-dot{width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.25);flex-shrink:0}
+.timer-display{font-size:32px;font-weight:800;color:#4f46e5;text-align:center;font-variant-numeric:tabular-nums;padding:8px 0;letter-spacing:1px}
+.timer-controls{display:flex;gap:8px;justify-content:center;margin-top:6px}
+.chat-feed{max-height:210px;overflow-y:auto;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px;margin-bottom:10px;display:flex;flex-direction:column;gap:8px}
+.chat-msg{background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:12.5px;color:#334155}
+.chat-msg strong{color:#4f46e5;font-size:11.5px;display:block;margin-bottom:2px}
+.chat-input-row{display:flex;gap:6px}
+.chat-input-row input{flex:1;background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:8px 10px;font-size:13px;color:#0f172a;outline:none}
+.chat-input-row input:focus{border-color:#4f46e5;background:#ffffff}
+
+/* ══════════════════ CUSTOM CONFIRM MODAL ══════════════════ */
+.modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.45);backdrop-filter:blur(3px);z-index:9998;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-backdrop.open{display:flex}
+.modal-box{background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;width:min(380px,92vw);box-shadow:0 20px 40px rgba(15,23,42,.18);font-family:'Inter',system-ui,sans-serif;color:#0f172a}
+.modal-box h4{font-size:16px;font-weight:700;margin-bottom:8px}
+.modal-box p{font-size:13.5px;color:#475569;margin-bottom:18px;line-height:1.5}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px}
+
+/* ══════════════════ TOAST ══════════════════ */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#0f172a;border:1px solid #334155;border-radius:10px;padding:11px 22px;color:#ffffff;font-family:'Inter',system-ui,sans-serif;font-size:13px;font-weight:600;z-index:9999;transition:.3s;box-shadow:0 10px 25px rgba(15,23,42,.25)}
+#toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<canvas id="matrixCanvas"></canvas>
+<div id="toast"></div>
+
+<!-- Custom Confirmation Modal -->
+<div class="modal-backdrop" id="confirmModal">
+  <div class="modal-box">
+    <h4 id="confirmTitle">Confirm Action</h4>
+    <p id="confirmMessage">Are you sure you want to continue?</p>
+    <div class="modal-actions">
+      <button class="btn-sm" onclick="closeConfirmModal()">Cancel</button>
+      <button class="btn-sm btn-danger" id="confirmYesBtn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ LOGIN SCREEN (MATRIX EDITION) ══════ -->
+<div class="screen" id="loginScreen">
+  <div class="logo-wrap">
+    <div class="triangle-eye">
+      <svg viewBox="0 0 120 104" xmlns="http://www.w3.org/2000/svg">
+        <g class="rays" opacity=".5">
+          <line x1="60" y1="10" x2="60" y2="0" stroke="#0f0" stroke-width="1.5"/>
+          <line x1="60" y1="10" x2="70" y2="2" stroke="#0f0" stroke-width="1"/>
+          <line x1="60" y1="10" x2="50" y2="2" stroke="#0f0" stroke-width="1"/>
+          <line x1="90" y1="68" x2="100" y2="74" stroke="#0f0" stroke-width="1.5"/>
+          <line x1="30" y1="68" x2="20" y2="74" stroke="#0f0" stroke-width="1.5"/>
+        </g>
+        <polygon points="60,8 112,96 8,96" fill="none" stroke="#0f0" stroke-width="2.5" class="eye-pulse" style="filter:drop-shadow(0 0 8px #0f0)"/>
+        <polygon points="60,20 100,88 20,88" fill="rgba(0,255,0,0.04)" stroke="#0f0" stroke-width="1" opacity=".5"/>
+        <ellipse cx="60" cy="68" rx="22" ry="12" fill="rgba(0,20,0,0.9)" stroke="#0f0" stroke-width="1.5" class="eye-pulse"/>
+        <ellipse cx="60" cy="68" rx="10" ry="10" fill="rgba(0,60,0,0.9)" stroke="#0f0" stroke-width="1"/>
+        <circle cx="60" cy="68" r="5" fill="#000"/>
+        <circle cx="60" cy="68" r="3" fill="#0f0" opacity=".8"/>
+        <circle cx="63" cy="65" r="1.5" fill="#fff" opacity=".9"/>
+        <path d="M38,68 Q60,56 82,68" fill="none" stroke="#0f0" stroke-width="1" opacity=".6"/>
+        <path d="M38,68 Q60,80 82,68" fill="none" stroke="#0f0" stroke-width="1" opacity=".6"/>
+      </svg>
+    </div>
+  </div>
+  <div class="login-title">STUDY HUB</div>
+  <div class="login-sub">◈ MATRIX EDITION ◈</div>
+  <div class="course-banner">LESBIAN DEFENCE FORCE COURSE</div>
+  <div class="card">
+    <form id="loginForm">
+      <label>USERNAME</label>
+      <input id="lu" type="text" autocomplete="username" placeholder="enter username" required>
+      <label>PASSWORD</label>
+      <input id="lp" type="password" autocomplete="current-password" placeholder="enter password" required>
+      <button type="submit">[ ENTER THE MATRIX ]</button>
+      <div class="login-err" id="lerr"></div>
+    </form>
+  </div>
+
+  <!-- Corner Sponsor Text -->
+  <div class="sponsor-badge">
+    <span class="dot"></span>
+    <span>Sponsored by Israel and Modi ji</span>
+  </div>
+</div>
+
+<!-- ══════ TRANSITION ══════ -->
+<div class="screen hidden" id="transitionScreen">
+  <div class="trans-logo eye-pulse">
+    <svg width="80" height="70" viewBox="0 0 120 104" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="60,8 112,96 8,96" fill="none" stroke="#0f0" stroke-width="3" style="filter:drop-shadow(0 0 12px #0f0)"/>
+      <ellipse cx="60" cy="68" rx="22" ry="12" fill="rgba(0,20,0,0.9)" stroke="#0f0" stroke-width="2"/>
+      <circle cx="60" cy="68" r="8" fill="#030"/>
+      <circle cx="60" cy="68" r="4" fill="#0f0"/>
+      <circle cx="63" cy="65" r="2" fill="#fff" opacity=".9"/>
+    </svg>
+  </div>
+  <div class="trans-text" id="transText">SKIPING THE MATRIX</div>
+  <div class="matrix-chars" id="matrixChars">01001101 01000001 01010100</div>
+  <div class="load-bar-wrap">
+    <div class="load-bar-fill" id="loadBar"></div>
+  </div>
+  <div class="load-pct" id="loadPct">0%</div>
+</div>
+
+<!-- ══════ MAIN APP ══════ -->
+<div class="screen hidden" id="appScreen">
+  <!-- Light Academic Editor Bar for Notes -->
+  <div class="editor-bar" id="editorBar" style="display:flex">
+    <span id="saveStatus">📝 Academic Reader Mode — Click "Edit Notes" to customize chapters</span>
+    <button class="btn-sm btn-primary" onclick="toggleEdit()" id="editBtn">Edit Notes</button>
+    <button class="btn-sm" onclick="saveLocal()">Save</button>
+    <button class="btn-sm" onclick="downloadHTML()">Download HTML</button>
+    <button class="btn-sm btn-danger" onclick="resetEdits()">Reset</button>
+  </div>
+
+  <!-- Top Navigation Bar -->
+  <div class="app-nav">
+    <div class="brand">
+      <span style="font-size:14px;margin-right:8px">◈</span>STUDY HUB
+    </div>
+    <button class="nav-btn active" data-page="notes" onclick="showPage('notes')">[ NOTES ]</button>
+    <button class="nav-btn" data-page="friends" onclick="showPage('friends')">[ FRIENDS ]</button>
+    <button class="nav-btn" data-page="study" onclick="showPage('study')">[ + BLANK STUDY SPACE ]</button>
+    <button class="nav-btn" style="color:#f44;border-color:transparent" onclick="logout()">[ EXIT ]</button>
+  </div>
+
+  <div class="app-content">
+
+    <!-- ══════ NOTES PAGE (LIGHT ACADEMIC THEME) ══════ -->
+    <div class="page active" id="page-notes">
+      <div class="page-header">
+        <div>
+          <div class="page-title">📚 Class 10 SST Revision Notes</div>
+          <div class="page-subtitle">Clean academic reading layout • Click any subject pill below to switch</div>
+        </div>
+        <button class="btn-sm btn-emerald" onclick="showPage('study')">+ Open Blank Study Page</button>
+      </div>
+
+      <div class="notes-nav">
+        <button class="active" data-t="his">History</button>
+        <button data-t="geo">Geography</button>
+        <button data-t="civ">Political Science</button>
+        <button data-t="eco">Economics</button>
+      </div>
+
+      <!-- HISTORY -->
+      <div id="his" class="note-wrap on">
+        <div class="chapter-block" style="--ac:#0284c7">
+          <h2>History 1 — Rise of Nationalism in Europe</h2>
+          <h3>1. French Revolution and the Idea of the Nation</h3>
+          <ul>
+            <li>Before the 19th century, Europe was organised into dynastic kingdoms rather than nation-states.</li>
+            <li>The <span class="year">1789</span> French Revolution transferred sovereignty from monarch to citizens; promoted <span class="term">la patrie</span> (fatherland) and <span class="term">le citoyen</span> (citizen).</li>
+            <li><span class="name">Napoleon</span> introduced the Civil Code of <span class="year">1804</span>: equality before law, abolition of birth privileges, protection of property.</li>
+          </ul>
+          <h3>2. Liberalism & Zollverein</h3>
+          <ul>
+            <li><span class="term">Liberalism</span>: government by consent, constitutional rule, freedom of markets.</li>
+            <li><span class="term">Zollverein</span> customs union formed <span class="year">1834</span> under Prussia — removed tariff barriers.</li>
+          </ul>
+          <h3>3. Treaty of Vienna 1815</h3>
+          <ul>
+            <li>Hosted by <span class="name">Duke Metternich</span>; restored old conservative order after Napoleon's defeat.</li>
+            <li><span class="name">Giuseppe Mazzini</span> founded Young Italy and Young Europe — nations are natural units of mankind.</li>
+          </ul>
+          <h3>4. Age of Revolutions 1830–1848</h3>
+          <ul>
+            <li><span class="year">1830</span> — July Revolution in France; Belgium broke from Netherlands.</li>
+            <li><span class="year">1832</span> — Greece recognised independent (Treaty of Constantinople).</li>
+            <li><span class="year">1848</span> — Frankfurt Parliament drafted constitution; Friedrich Wilhelm IV rejected the crown.</li>
+          </ul>
+          <h3>5. Unification of Germany & Italy</h3>
+          <ul>
+            <li>Germany: <span class="name">Otto von Bismarck</span> — "blood and iron" — wars vs Denmark, Austria, France. <span class="name">William I</span> proclaimed Emperor <span class="year">Jan 1871</span> at Versailles.</li>
+            <li>Italy: Mazzini (idea), <span class="name">Count Cavour</span> (diplomacy), <span class="name">Garibaldi</span> (Red Shirts). <span class="year">1861</span> Victor Emmanuel II proclaimed king.</li>
+          </ul>
+          <div class="exam-box">★ BOARD FOCUS: Chronology, allegory identification, roles of Mazzini/Cavour/Garibaldi/Bismarck, Treaty of Vienna, Frankfurt Parliament, Balkan question.</div>
+        </div>
+
+        <div class="chapter-block" style="--ac:#059669">
+          <h2>History 2 — Nationalism in India</h2>
+          <h3>1. Satyagraha & Early Gandhi</h3>
+          <ul>
+            <li><span class="name">Gandhi</span> returned <span class="year">1915</span>; developed <span class="term">Satyagraha</span> — non-violent resistance based on truth.</li>
+            <li><span class="year">1917</span> Champaran (indigo), Kheda (revenue), <span class="year">1918</span> Ahmedabad (mill workers).</li>
+          </ul>
+          <h3>2. Rowlatt Act & Jallianwala Bagh</h3>
+          <ul>
+            <li><span class="year">1919</span> Rowlatt Act — detention without trial. Gandhi called nationwide hartal.</li>
+            <li><span class="year">13 April 1919</span> — <span class="name">General Dyer</span> fired on peaceful gathering at Jallianwala Bagh.</li>
+          </ul>
+          <h3>3. Non-Cooperation Movement 1920–22</h3>
+          <ul>
+            <li>Khilafat Movement (Ali brothers) + Gandhi's Non-Cooperation united Hindus and Muslims.</li>
+            <li>Boycott of schools, courts, councils, foreign cloth. <span class="year">1922</span> Chauri Chaura violence → Gandhi withdrew.</li>
+          </ul>
+          <h3>4. Civil Disobedience Movement</h3>
+          <ul>
+            <li><span class="year">1929</span> Lahore Congress under <span class="name">Nehru</span> declared <span class="term">Purna Swaraj</span>. Jan 26, 1930 = Independence Day.</li>
+            <li><span class="year">12 Mar–6 Apr 1930</span> Salt March: Sabarmati → Dandi.</li>
+            <li><span class="year">1931</span> Gandhi-Irwin Pact. <span class="year">1932</span> Poona Pact with <span class="name">Dr B.R. Ambedkar</span>.</li>
+          </ul>
+          <div class="exam-box">★ BOARD FOCUS: Movement-wise objectives, participation, withdrawal causes, timeline 1915–1934.</div>
+        </div>
+
+        <div class="chapter-block" style="--ac:#4f46e5">
+          <h2>History 3 — Making of a Global World</h2>
+          <ul>
+            <li>Silk Routes linked Asia–Europe–North Africa. Food crops crossed continents.</li>
+            <li>19th century: flows of goods, labour, capital. Britain repealed Corn Laws. Indian indentured labourers went to Caribbean, Fiji, Mauritius.</li>
+            <li><span class="year">1929</span> Great Depression: bank failures, unemployment, falling farm prices.</li>
+            <li><span class="year">1944</span> Bretton Woods: created IMF & World Bank, stable exchange rates.</li>
+          </ul>
+        </div>
+
+        <div class="chapter-block" style="--ac:#16a34a">
+          <h2>History 4 — Age of Industrialisation</h2>
+          <ul>
+            <li><span class="term">Proto-industrialisation</span>: rural household production organised by merchants before factories.</li>
+            <li>In India, gomasthas controlled weavers; Manchester cloth competed with Indian textiles.</li>
+            <li>Factories in Bombay & Bengal. <span class="name">Jamsetji Tata</span> built modern industry.</li>
+          </ul>
+        </div>
+
+        <div class="chapter-block" style="--ac:#d97706">
+          <h2>History 5 — Print Culture & Modern World</h2>
+          <ul>
+            <li><span class="name">Johannes Gutenberg</span> — European press, 15th century. Gutenberg Bible.</li>
+            <li><span class="name">Martin Luther</span>'s writings challenged Church authority.</li>
+            <li><span class="year">1780</span> <span class="name">James Augustus Hickey</span> published Bengal Gazette.</li>
+            <li><span class="year">1878</span> Vernacular Press Act restricted Indian-language newspapers.</li>
+          </ul>
+          <div class="exam-box">★ BOARD FOCUS: Gutenberg, religious debate, print & dissent, women readers, reform, colonial censorship.</div>
+        </div>
+      </div>
+
+      <!-- GEOGRAPHY -->
+      <div id="geo" class="note-wrap">
+        <div class="chapter-block" style="--ac:#0d9488">
+          <h2>Geography 1 — Resources and Development</h2>
+          <ul>
+            <li>Classifications: biotic/abiotic; renewable/non-renewable; potential/developed/stock/reserves.</li>
+            <li>Major soils: alluvial, black, red & yellow, laterite, arid, forest/mountain.</li>
+            <li>Alluvial soil: <span class="term">khadar</span> (new) and <span class="term">bangar</span> (old). Black soil retains moisture — good for cotton.</li>
+            <li>Soil erosion control: contour ploughing, terrace farming, strip cropping, shelter belts.</li>
+          </ul>
+        </div>
+        <div class="chapter-block" style="--ac:#0284c7">
+          <h2>Geography 2 — Forest and Wildlife</h2>
+          <ul>
+            <li>IUCN categories: extinct, endangered, vulnerable, rare, endemic.</li>
+            <li>Wildlife Protection Act <span class="year">1972</span>. Project Tiger <span class="year">1973</span>.</li>
+            <li>Community conservation: sacred groves, Chipko Movement, Beej Bachao Andolan, Joint Forest Management.</li>
+          </ul>
+        </div>
+        <div class="chapter-block" style="--ac:#059669">
+          <h2>Geography 3 — Water Resources</h2>
+          <ul>
+            <li>Multipurpose dams: Bhakra-Nangal, Tehri, Hirakud, Sardar Sarovar.</li>
+            <li>Rainwater harvesting: tankas, khadins, johads, guls/kuls, bamboo drip irrigation.</li>
+            <li><span class="name">Narmada Bachao Andolan</span> — social & environmental concerns about large dams.</li>
+          </ul>
+        </div>
+        <div class="chapter-block" style="--ac:#16a34a">
+          <h2>Geography 4 — Agriculture</h2>
+          <ul>
+            <li>Seasons: <span class="term">Rabi</span> (winter), <span class="term">Kharif</span> (monsoon), <span class="term">Zaid</span> (summer).</li>
+            <li>Green Revolution: HYV seeds, irrigation, fertilisers — raised productivity.</li>
+          </ul>
+        </div>
+        <div class="chapter-block" style="--ac:#4f46e5">
+          <h2>Geography 5 — Minerals and Energy</h2>
+          <ul>
+            <li>Metallic: ferrous (iron, manganese) and non-ferrous (bauxite → aluminium, mica).</li>
+            <li>Conventional: coal, petroleum, gas. Non-conventional: solar, wind, tidal, biogas, geothermal.</li>
+          </ul>
+        </div>
+        <div class="chapter-block" style="--ac:#0d9488">
+          <h2>Geography 6 — Manufacturing Industries</h2>
+          <ul>
+            <li>Iron & steel centres: Jamshedpur, Bhilai, Durgapur, Rourkela.</li>
+            <li><span class="year">1984</span> Bhopal gas tragedy — industrial disaster case study.</li>
+          </ul>
+        </div>
+        <div class="chapter-block" style="--ac:#0284c7">
+          <h2>Geography 7 — Lifelines of National Economy</h2>
+          <ul>
+            <li>Golden Quadrilateral: Delhi–Mumbai–Chennai–Kolkata.</li>
+            <li>Major ports: Kandla, Mumbai, JNPT, Chennai, Kolkata, Visakhapatnam.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- POLITICAL SCIENCE -->
+      <div id="civ" class="note-wrap">
+        <div class="chapter-block" style="--ac:#0284c7">
+          <h2>Pol. Sci. 1 — Power Sharing</h2>
+          <ul>
+            <li>Belgium: equal central representation, community government, Brussels arrangement.</li>
+            <li>Sri Lanka: <span class="year">1956</span> Sinhala Only Act → conflict with Tamil communities.</li>
+            <li><span class="term">Prudential reason</span>: reduces conflict. <span class="term">Moral reason</span>: right to be consulted.</li>
+            <li>Forms: horizontal (legislature/exec/judiciary), vertical (levels of govt), social groups, political parties.</li>
+          </ul>
+        </div>
+        <div class="chapter-block" style="--ac:#7c3aed">
+          <h2>Pol. Sci. 2 — Federalism</h2>
+          <ul>
+            <li><span class="term">Coming together</span>: USA, Switzerland, Australia. <span class="term">Holding together</span>: India, Spain, Belgium.</li>
+            <li>Union List (defence, foreign affairs), State List (police, agriculture), Concurrent List (education, forests).</li>
+            <li>73rd & 74th Amendments strengthened local government (Panchayati Raj).</li>
+          </ul>
+        </div>
+        <div class="chapter-block" style="--ac:#0284c7">
+          <h2>Pol. Sci. 3 — Gender, Religion & Caste</h2>
+          <ul>
+            <li><span class="term">Communalism</span>: religion used for political division or one group claiming superiority.</li>
+            <li>India is a secular state — no official religion, constitutional equality.</li>
+          </ul>
+        </div>
+        <div class="chapter-block" style="--ac:#7c3aed">
+          <h2>Pol. Sci. 4 — Political Parties</h2>
+          <ul>
+            <li>Functions: contest elections, offer policies, form govt, act as opposition, shape public opinion.</li>
+            <li>Challenges: lack of internal democracy, dynastic succession, money & muscle power.</li>
+          </ul>
+        </div>
+        <div class="chapter-block" style="--ac:#0284c7">
+          <h2>Pol. Sci. 5 — Outcomes of Democracy</h2>
+          <ul>
+            <li>Provides accountable, responsive, legitimate government; allows peaceful correction of mistakes.</li>
+            <li>Promotes dignity and freedom; does not automatically eliminate poverty.</li>
+          </ul>
+          <div class="exam-box">★ BOARD FOCUS: Comparisons, case studies, definitions, "why/how" questions especially important.</div>
+        </div>
+      </div>
+
+      <!-- ECONOMICS -->
+      <div id="eco" class="note-wrap">
+        <div class="chapter-block" style="--ac:#d97706">
+          <h2>Economics 1 — Development</h2>
+          <ul>
+            <li><span class="term">Per capita income</span> = total income ÷ population. Helps compare but doesn't show inequality.</li>
+            <li>Other indicators: infant mortality, literacy, nutrition, public facilities access.</li>
+            <li><span class="term">Human Development</span>: health + education + standard of living.</li>
+          </ul>
+        </div>
+        <div class="chapter-block" style="--ac:#ea580c">
+          <h2>Economics 2 — Sectors of Indian Economy</h2>
+          <ul>
+            <li><span class="term">Primary</span>: agriculture. <span class="term">Secondary</span>: manufacturing. <span class="term">Tertiary</span>: services.</li>
+            <li><span class="term">Disguised unemployment</span>: more workers than needed; removing some doesn't reduce output.</li>
+            <li>MGNREGA: legal guarantee of rural employment, 100 days per year.</li>
+          </ul>
+        </div>
+        <div class="chapter-block" style="--ac:#d97706">
+          <h2>Economics 3 — Money and Credit</h2>
+          <ul>
+            <li>Money solves double coincidence of wants problem.</li>
+            <li>Formal credit: banks, cooperatives (regulated). Informal: moneylenders, traders (high interest).</li>
+            <li>Self-help groups help borrowers access small loans.</li>
+          </ul>
+        </div>
+        <div class="chapter-block" style="--ac:#ea580c">
+          <h2>Economics 4 — Globalisation & Indian Economy</h2>
+          <ul>
+            <li><span class="term">MNCs</span> organise production across countries via investment, partnerships, global supply chains.</li>
+            <li><span class="year">1991</span> economic reforms reduced trade & investment barriers. WTO provides rules.</li>
+            <li>Benefits uneven — small producers face strong competition.</li>
+          </ul>
+        </div>
+        <div class="chapter-block" style="--ac:#d97706">
+          <h2>Economics 5 — Consumer Rights</h2>
+          <ul>
+            <li>Rights: safety, information, choice, being heard, redressal, consumer education.</li>
+            <li>Quality marks: ISI, Hallmark, Agmark.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ FRIENDS PAGE (LIGHT ACADEMIC THEME) ══════ -->
+    <div class="page" id="page-friends">
+      <div class="page-header">
+        <div>
+          <div class="page-title">🤝 Study Friends & Partners</div>
+          <div class="page-subtitle">Connect with classmates and launch a shared blank study page together</div>
+        </div>
+        <button class="btn-sm btn-primary" onclick="openStudyWithFriend('')">+ Open Blank Study Room</button>
+      </div>
+
+      <!-- Invite -->
+      <div class="friend-section">
+        <div class="section-label"><span>Invite a Friend by Username</span></div>
+        <div class="invite-row">
+          <input id="inviteInput" placeholder="Enter classmate username to invite..." type="text">
+          <button class="btn-sm btn-primary" onclick="sendInvite()">Send Invite</button>
+        </div>
+      </div>
+
+      <div class="friends-grid">
+        <!-- Incoming -->
+        <div class="friend-section">
+          <div class="section-label"><span>Incoming Invites</span></div>
+          <div id="incomingList">
+            <div class="empty-msg" id="noIncoming">No pending invites right now</div>
+          </div>
+        </div>
+
+        <!-- Friends -->
+        <div class="friend-section">
+          <div class="section-label"><span>Your Study Circle</span></div>
+          <div id="friendList">
+            <div class="empty-msg" id="noFriends">No friends yet — invite someone to study together!</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ BLANK STUDY SPACE PAGE (LIGHT ACADEMIC THEME) ══════ -->
+    <div class="page" id="page-study">
+      <div class="page-header">
+        <div>
+          <div class="page-title">📝 Collaborative Blank Study Space</div>
+          <div class="page-subtitle">Add blank pages, draft answers, brainstorm formulas, and study live with your friends</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-sm btn-emerald" onclick="addBlankPage()">+ Add Blank Page</button>
+          <button class="btn-sm btn-primary" onclick="saveBlankPages(true)">Save All Pages</button>
+          <button class="btn-sm" onclick="downloadActiveBlankPage()">Download Page</button>
+        </div>
+      </div>
+
+      <div class="study-layout">
+        <!-- Left: Blank Page Notebook -->
+        <div class="study-main-card">
+          <div class="blank-tabs-bar" id="blankTabsBar">
+            <!-- Tabs rendered by JS -->
+          </div>
+
+          <div class="study-toolbar">
+            <button class="tool-btn" onclick="execStudyCmd('bold')" title="Bold"><b>B</b></button>
+            <button class="tool-btn" onclick="execStudyCmd('italic')" title="Italic"><i>I</i></button>
+            <button class="tool-btn" onclick="execStudyCmd('underline')" title="Underline"><u>U</u></button>
+            <button class="tool-btn" onclick="execStudyCmd('insertUnorderedList')" title="Bullet List">• List</button>
+            <button class="tool-btn" onclick="highlightSelection()" title="Highlight">🖍 Highlight</button>
+            <select class="paper-select" id="paperStyleSelect" onchange="changePaperStyle(this.value)">
+              <option value="plain">Plain Blank Paper</option>
+              <option value="lined">Ruled Lined Paper</option>
+              <option value="grid">Math / Graph Grid</option>
+            </select>
+            <button class="btn-sm btn-danger" style="margin-left:auto;padding:5px 11px;font-size:12px" onclick="clearCurrentBlankPage()">Clear Page</button>
+          </div>
+
+          <input type="text" id="blankPageTitle" class="blank-page-title-input" placeholder="Untitled Study Page (e.g., History Map Work / Revision Sheet)..." oninput="updateActivePageTitle(this.value)">
+
+          <div id="blankCanvas" class="blank-canvas" contenteditable="true" data-placeholder="Start typing your notes, definitions, practice answers, or study together with friends on this blank page..." oninput="syncActivePageContent()"></div>
+        </div>
+
+        <!-- Right: Study With Friends Sidebar -->
+        <div>
+          <!-- Partner Selector -->
+          <div class="study-side-card">
+            <div class="side-heading">
+              <span>👥 Study Partner</span>
+              <button class="btn-sm" style="padding:4px 10px;font-size:11px" onclick="showPage('friends')">+ Add Friends</button>
+            </div>
+            <select id="studyPartnerSelect" class="partner-select" onchange="selectStudyPartner(this.value)">
+              <option value="">Solo Study Mode</option>
+            </select>
+            <div id="partnerStatusBox" class="partner-badge" style="display:none">
+              <span class="pulse-dot"></span>
+              <span id="partnerStatusText">Studying together live</span>
+            </div>
+          </div>
+
+          <!-- Shared Pomodoro Timer -->
+          <div class="study-side-card">
+            <div class="side-heading">
+              <span>⏱ Focus Timer</span>
+              <span style="font-size:11px;color:#64748b">25m Session</span>
+            </div>
+            <div class="timer-display" id="pomoDisplay">25:00</div>
+            <div class="timer-controls">
+              <button class="btn-sm btn-primary" id="pomoStartBtn" onclick="togglePomodoro()">Start</button>
+              <button class="btn-sm" onclick="resetPomodoro()">Reset</button>
+            </div>
+          </div>
+
+          <!-- Quick Study Scratchpad / Friend Notes -->
+          <div class="study-side-card">
+            <div class="side-heading">
+              <span>💬 Shared Study Prompts</span>
+            </div>
+            <div class="chat-feed" id="studyChatFeed">
+              <!-- Messages rendered by JS -->
+            </div>
+            <div class="chat-input-row">
+              <input type="text" id="studyChatInput" placeholder="Drop a question or formula..." onkeydown="if(event.key==='Enter')sendStudyPrompt()">
+              <button class="btn-sm btn-primary" style="padding:8px 12px" onclick="sendStudyPrompt()">Post</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end app-content -->
+</div><!-- end appScreen -->
+
+<script>
+// ══════ MATRIX RAIN (LOGIN & TRANSITION) ══════
+const canvas = document.getElementById('matrixCanvas');
+const ctx = canvas.getContext('2d');
+let cols, drops;
+function resizeCanvas(){
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  cols = Math.floor(canvas.width / 16);
+  drops = Array(cols).fill(1);
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+function drawMatrix(){
+  ctx.fillStyle = 'rgba(0,0,0,0.05)';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.font = '14px Courier New';
+  for(let i=0;i<cols;i++){
+    const c = String.fromCharCode(0x30A0 + Math.random()*96);
+    ctx.fillStyle = `rgba(0,${Math.floor(100+Math.random()*155)},0,${0.4+Math.random()*.6})`;
+    ctx.fillText(c, i*16, drops[i]*16);
+    if(drops[i]*16 > canvas.height && Math.random()>.975) drops[i]=0;
+    drops[i]++;
+  }
+}
+setInterval(drawMatrix, 50);
+
+// ══════ STORAGE KEYS ══════
+const LOGIN_KEY = 'studyhub_creds_v1';
+const FRIENDS_KEY = 'studyhub_friends_v1';
+const INCOMING_KEY = 'studyhub_incoming_v1';
+const NOTES_KEY = 'studyhub_notes_v1';
+const BLANK_PAGES_KEY = 'studyhub_blank_pages_v1';
+const STUDY_CHAT_KEY = 'studyhub_study_chat_v1';
+
+// ══════ CUSTOM MODAL (NO NATIVE CONFIRM/ALERT) ══════
+let confirmCallback = null;
+function openConfirmModal(title, message, onYes){
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMessage').textContent = message;
+  confirmCallback = onYes;
+  document.getElementById('confirmModal').classList.add('open');
+}
+function closeConfirmModal(){
+  document.getElementById('confirmModal').classList.remove('open');
+  confirmCallback = null;
+}
+document.getElementById('confirmYesBtn').addEventListener('click', ()=>{
+  if(typeof confirmCallback === 'function') confirmCallback();
+  closeConfirmModal();
+});
+
+// ══════ AUTH ══════
+function getCreds(){ try{ return JSON.parse(localStorage.getItem(LOGIN_KEY))||null; }catch(e){return null;} }
+function getUser(){ const c=getCreds(); return c?c.username:'Student'; }
+
+document.getElementById('loginForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  const u = document.getElementById('lu').value.trim();
+  const p = document.getElementById('lp').value;
+  let creds = getCreds();
+  if(!creds){
+    if(!u||!p) return;
+    localStorage.setItem(LOGIN_KEY, JSON.stringify({username:u,password:p}));
+    startTransition();
+  } else {
+    if(u===creds.username && p===creds.password){
+      document.getElementById('lerr').textContent='';
+      startTransition();
+    } else {
+      document.getElementById('lerr').textContent='incorrect username or password.';
+    }
+  }
+});
+
+function logout(){
+  document.getElementById('appScreen').classList.add('hidden');
+  document.getElementById('loginScreen').classList.remove('hidden');
+  document.getElementById('lu').value='';
+  document.getElementById('lp').value='';
+}
+
+// ══════ TRANSITION ══════
+function startTransition(){
+  document.getElementById('loginScreen').classList.add('hidden');
+  const ts = document.getElementById('transitionScreen');
+  ts.classList.remove('hidden');
+  const bar = document.getElementById('loadBar');
+  const pct = document.getElementById('loadPct');
+  const chars = document.getElementById('matrixChars');
+  const texts = ['SKIPING THE MATRIX','BYPASSING FIREWALL','LOADING STUDY HUB','DECRYPTING NOTES..','SYSTEM READY......'];
+  let progress = 0;
+  const charSets = ['01001101 01000001 01010100','10110100 11001010 00110101','INITIATING PROTOCOL','BREAKING THE LOOP..','> ACCESS GRANTED <'];
+  let ti = 0;
+  const iv = setInterval(()=>{
+    progress += Math.random()*4+1;
+    if(progress>100) progress=100;
+    bar.style.width = progress+'%';
+    pct.textContent = Math.floor(progress)+'%';
+    if(Math.floor(progress) > ti*20 && ti < texts.length){
+      document.getElementById('transText').textContent = texts[ti];
+      chars.textContent = charSets[ti];
+      ti++;
+    }
+    if(progress>=100){
+      clearInterval(iv);
+      setTimeout(()=>{
+        ts.classList.add('hidden');
+        document.getElementById('appScreen').classList.remove('hidden');
+        loadFriendsPage();
+        initBlankStudySpace();
+      },600);
+    }
+  },60);
+}
+
+// ══════ PAGE NAV ══════
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const target = document.getElementById('page-'+name);
+  if(target) target.classList.add('active');
+  document.querySelectorAll('.nav-btn[data-page]').forEach(b=>{
+    b.classList.toggle('active', b.dataset.page === name);
+  });
+  document.getElementById('editorBar').style.display = name==='notes'?'flex':'none';
+  if(name==='friends') loadFriendsPage();
+  if(name==='study'){
+    populateStudyPartnerDropdown();
+    renderBlankTabs();
+  }
+}
+
+// ══════ NOTES TABS ══════
+function bindNotesTabs(){
+  document.querySelectorAll('.notes-nav button').forEach(b=>{
+    b.addEventListener('click',()=>{
+      document.querySelectorAll('.notes-nav button').forEach(x=>x.classList.toggle('active',x===b));
+      document.querySelectorAll('.note-wrap').forEach(w=>w.classList.toggle('on',w.id===b.dataset.t));
+    });
+  });
+}
+bindNotesTabs();
+
+// ══════ NOTES EDITOR ══════
+let editing = false;
+function setEditable(on){
+  document.querySelectorAll('#page-notes h2,#page-notes h3,#page-notes p,#page-notes li,#page-notes .exam-box').forEach(el=>{
+    el.contentEditable = on?'true':'false';
+  });
+  editing = on;
+  const editBtn = document.getElementById('editBtn');
+  if(editBtn) editBtn.textContent = on?'Done Editing':'Edit Notes';
+  const status = document.getElementById('saveStatus');
+  if(status) status.textContent = on
+    ? '✏️ Edit Mode Active — Click any text in the notes to edit, then press Save'
+    : '📝 Academic Reader Mode — Click "Edit Notes" to customize chapters';
+}
+function toggleEdit(){ setEditable(!editing); }
+function saveLocal(){
+  const notesEl = document.getElementById('page-notes');
+  if(notesEl){
+    localStorage.setItem(NOTES_KEY, notesEl.innerHTML);
+  }
+  showToast('Notes saved to browser ✓');
+  document.getElementById('saveStatus').textContent='✅ Saved locally in your browser';
+}
+function resetEdits(){
+  openConfirmModal('Reset Notes', 'Reset all custom note edits back to the original Class 10 SST chapters?', ()=>{
+    localStorage.removeItem(NOTES_KEY);
+    location.reload();
+  });
+}
+function downloadHTML(){
+  const clone = document.documentElement.cloneNode(true);
+  clone.querySelectorAll('#page-notes [contenteditable]').forEach(el=>{
+    el.removeAttribute('contenteditable');el.removeAttribute('spellcheck');
+  });
+  const blob = new Blob(['<!DOCTYPE html>\n'+clone.outerHTML],{type:'text/html;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='StudyHub_SST_Notes.html';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
+// Load saved notes & study space on startup
+window.addEventListener('DOMContentLoaded',()=>{
+  const saved = localStorage.getItem(NOTES_KEY);
+  if(saved){
+    const notesEl = document.getElementById('page-notes');
+    if(notesEl) notesEl.innerHTML = saved;
+  }
+  setEditable(false);
+  bindNotesTabs();
+  initBlankStudySpace();
+});
+
+// ══════ FRIENDS ══════
+function getFriends(){ try{return JSON.parse(localStorage.getItem(FRIENDS_KEY))||[];}catch(e){return[];} }
+function getIncoming(){ try{return JSON.parse(localStorage.getItem(INCOMING_KEY))||[];}catch(e){return[];} }
+function saveFriends(arr){ localStorage.setItem(FRIENDS_KEY,JSON.stringify(arr)); }
+function saveIncoming(arr){ localStorage.setItem(INCOMING_KEY,JSON.stringify(arr)); }
+
+function sendInvite(){
+  const val = document.getElementById('inviteInput').value.trim();
+  if(!val){ showToast('Please enter a username!'); return; }
+  if(val === getUser()){ showToast("You can't invite yourself!"); return; }
+  const friends = getFriends();
+  if(friends.find(f=>f.username===val)){ showToast('Already in your friend list!'); return; }
+  const incoming = getIncoming();
+  if(incoming.find(i=>i.from===val)){ showToast('Invite already pending!'); return; }
+  incoming.push({from: val, time: Date.now()});
+  saveIncoming(incoming);
+  document.getElementById('inviteInput').value='';
+  showToast(`Invite sent to ${val} ✓`);
+  loadFriendsPage();
+}
+
+function acceptInvite(username){
+  const incoming = getIncoming().filter(i=>i.from!==username);
+  saveIncoming(incoming);
+  const friends = getFriends();
+  if(!friends.find(f=>f.username===username)){
+    friends.push({username, since: Date.now()});
+    saveFriends(friends);
+  }
+  showToast(`Connected with ${username} ✓`);
+  loadFriendsPage();
+  populateStudyPartnerDropdown();
+}
+
+function declineInvite(username){
+  const incoming = getIncoming().filter(i=>i.from!==username);
+  saveIncoming(incoming);
+  showToast(`Declined ${username}`);
+  loadFriendsPage();
+}
+
+function removeFriend(username){
+  openConfirmModal('Remove Friend', `Remove ${username} from your study friends list?`, ()=>{
+    saveFriends(getFriends().filter(f=>f.username!==username));
+    showToast(`Removed ${username}`);
+    loadFriendsPage();
+    populateStudyPartnerDropdown();
+  });
+}
+
+function openStudyWithFriend(username){
+  showPage('study');
+  if(username){
+    const sel = document.getElementById('studyPartnerSelect');
+    if(sel){
+      sel.value = username;
+      selectStudyPartner(username);
+    }
+  }
+}
+
+function loadFriendsPage(){
+  const incoming = getIncoming();
+  const friends = getFriends();
+  const iList = document.getElementById('incomingList');
+  const fList = document.getElementById('friendList');
+  if(!iList||!fList) return;
+
+  if(incoming.length===0){
+    iList.innerHTML='<div class="empty-msg">No pending invites right now</div>';
+  } else {
+    iList.innerHTML = incoming.map(i=>`
+      <div class="friend-card">
+        <div class="friend-avatar">${escHtml(i.from.charAt(0).toUpperCase())}</div>
+        <div style="flex:1">
+          <div class="friend-name">${escHtml(i.from)}</div>
+          <div class="friend-status" style="color:#64748b">Wants to study together</div>
+        </div>
+        <div class="invite-actions">
+          <button class="btn-sm btn-accept" onclick="acceptInvite('${escHtml(i.from)}')">Accept</button>
+          <button class="btn-sm btn-decline" onclick="declineInvite('${escHtml(i.from)}')">Decline</button>
+        </div>
+      </div>`).join('');
+  }
+
+  if(friends.length===0){
+    fList.innerHTML='<div class="empty-msg">No friends yet — invite someone above!</div>';
+  } else {
+    fList.innerHTML = friends.map(f=>`
+      <div class="friend-card">
+        <div class="friend-avatar">${escHtml(f.username.charAt(0).toUpperCase())}</div>
+        <div style="flex:1">
+          <div class="friend-name">${escHtml(f.username)}</div>
+          <div class="friend-status">● Ready to study</div>
+        </div>
+        <div class="invite-actions">
+          <button class="btn-sm btn-primary" onclick="openStudyWithFriend('${escHtml(f.username)}')">Study Together</button>
+          <button class="btn-sm btn-danger" onclick="removeFriend('${escHtml(f.username)}')">Remove</button>
+        </div>
+      </div>`).join('');
+  }
+}
+
+// ══════ COLLABORATIVE BLANK STUDY SPACE ══════
+let blankPages = [];
+let activeBlankId = null;
+
+function initBlankStudySpace(){
+  try{
+    blankPages = JSON.parse(localStorage.getItem(BLANK_PAGES_KEY)) || [];
+  }catch(e){
+    blankPages = [];
+  }
+  if(blankPages.length === 0){
+    blankPages = [{
+      id: 'page_' + Date.now(),
+      title: 'Blank Study Page 1',
+      content: '',
+      paper: 'plain'
+    }];
+  }
+  if(!activeBlankId || !blankPages.find(p => p.id === activeBlankId)){
+    activeBlankId = blankPages[0].id;
+  }
+  renderBlankTabs();
+  loadActiveBlankPage();
+  populateStudyPartnerDropdown();
+  renderStudyChat();
+}
+
+function renderBlankTabs(){
+  const bar = document.getElementById('blankTabsBar');
+  if(!bar) return;
+  bar.innerHTML = blankPages.map(p => `
+    <div class="blank-tab ${p.id === activeBlankId ? 'active' : ''}" onclick="switchBlankPage('${p.id}')">
+      <span>📄 ${escHtml(p.title || 'Untitled Page')}</span>
+      ${blankPages.length > 1 ? `<span class="close-tab" title="Delete page" onclick="event.stopPropagation();deleteBlankPage('${p.id}')">×</span>` : ''}
+    </div>
+  `).join('') + `<button class="btn-sm" style="padding:5px 11px;font-size:12px" onclick="addBlankPage()">+ Blank Page</button>`;
+}
+
+function loadActiveBlankPage(){
+  const page = blankPages.find(p => p.id === activeBlankId);
+  if(!page) return;
+  document.getElementById('blankPageTitle').value = page.title || '';
+  const canvasEl = document.getElementById('blankCanvas');
+  canvasEl.innerHTML = page.content || '';
+  const paper = page.paper || 'plain';
+  document.getElementById('paperStyleSelect').value = paper;
+  applyPaperClass(paper);
+}
+
+function switchBlankPage(id){
+  syncActivePageContent();
+  activeBlankId = id;
+  renderBlankTabs();
+  loadActiveBlankPage();
+}
+
+function addBlankPage(){
+  syncActivePageContent();
+  const num = blankPages.length + 1;
+  const newPage = {
+    id: 'page_' + Date.now(),
+    title: `Blank Study Page ${num}`,
+    content: '',
+    paper: 'plain'
+  };
+  blankPages.push(newPage);
+  activeBlankId = newPage.id;
+  saveBlankPages(false);
+  renderBlankTabs();
+  loadActiveBlankPage();
+  showToast(`Added "${newPage.title}" ✓`);
+}
+
+function deleteBlankPage(id){
+  if(blankPages.length <= 1) return;
+  openConfirmModal('Delete Blank Page', 'Delete this blank study page permanently?', ()=>{
+    blankPages = blankPages.filter(p => p.id !== id);
+    if(activeBlankId === id){
+      activeBlankId = blankPages[0].id;
+    }
+    saveBlankPages(false);
+    renderBlankTabs();
+    loadActiveBlankPage();
+    showToast('Blank page deleted');
+  });
+}
+
+function updateActivePageTitle(val){
+  const page = blankPages.find(p => p.id === activeBlankId);
+  if(page){
+    page.title = val;
+    renderBlankTabs();
+    saveBlankPages(false);
+  }
+}
+
+function syncActivePageContent(){
+  const page = blankPages.find(p => p.id === activeBlankId);
+  const canvasEl = document.getElementById('blankCanvas');
+  if(page && canvasEl){
+    page.content = canvasEl.innerHTML;
+    saveBlankPages(false);
+  }
+}
+
+function saveBlankPages(notify){
+  try{
+    localStorage.setItem(BLANK_PAGES_KEY, JSON.stringify(blankPages));
+    if(notify) showToast('All blank study pages saved ✓');
+  }catch(e){}
+}
+
+function changePaperStyle(style){
+  const page = blankPages.find(p => p.id === activeBlankId);
+  if(page){
+    page.paper = style;
+    saveBlankPages(false);
+  }
+  applyPaperClass(style);
+}
+
+function applyPaperClass(style){
+  const canvasEl = document.getElementById('blankCanvas');
+  canvasEl.classList.remove('lined', 'grid');
+  if(style === 'lined') canvasEl.classList.add('lined');
+  if(style === 'grid') canvasEl.classList.add('grid');
+}
+
+function execStudyCmd(cmd){
+  document.getElementById('blankCanvas').focus();
+  document.execCommand(cmd, false, null);
+  syncActivePageContent();
+}
+
+function highlightSelection(){
+  document.getElementById('blankCanvas').focus();
+  document.execCommand('hiliteColor', false, '#fef08a');
+  syncActivePageContent();
+}
+
+function clearCurrentBlankPage(){
+  openConfirmModal('Clear Blank Page', 'Erase everything written on this page?', ()=>{
+    document.getElementById('blankCanvas').innerHTML = '';
+    syncActivePageContent();
+    showToast('Page cleared');
+  });
+}
+
+function downloadActiveBlankPage(){
+  const page = blankPages.find(p => p.id === activeBlankId);
+  if(!page) return;
+  const title = page.title || 'Blank_Study_Page';
+  const docHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escHtml(title)}</title><style>body{font-family:system-ui,sans-serif;max-width:800px;margin:40px auto;padding:24px;line-height:1.8;color:#1e293b}h1{border-bottom:2px solid #e2e8f0;padding-bottom:10px}</style></head><body><h1>${escHtml(title)}</h1><div>${page.content}</div></body></html>`;
+  const blob = new Blob([docHtml], {type:'text/html;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = title.replace(/[^a-z0-9_-]/gi,'_') + '.html';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+}
+
+// ══════ STUDY PARTNERS & SHARED PROMPTS ══════
+function populateStudyPartnerDropdown(){
+  const sel = document.getElementById('studyPartnerSelect');
+  if(!sel) return;
+  const currentVal = sel.value;
+  const friends = getFriends();
+  sel.innerHTML = `<option value="">Solo Study Mode</option>` +
+    friends.map(f => `<option value="${escHtml(f.username)}">Studying with: ${escHtml(f.username)}</option>`).join('');
+  if(friends.find(f => f.username === currentVal)){
+    sel.value = currentVal;
+  }
+  selectStudyPartner(sel.value);
+}
+
+function selectStudyPartner(partner){
+  const box = document.getElementById('partnerStatusBox');
+  const txt = document.getElementById('partnerStatusText');
+  if(!box || !txt) return;
+  if(partner){
+    box.style.display = 'flex';
+    txt.textContent = `${partner} joined your blank study page`;
+  } else {
+    box.style.display = 'none';
+  }
+}
+
+function renderStudyChat(){
+  const feed = document.getElementById('studyChatFeed');
+  if(!feed) return;
+  let msgs = [];
+  try{ msgs = JSON.parse(localStorage.getItem(STUDY_CHAT_KEY)) || []; }catch(e){}
+  if(msgs.length === 0){
+    msgs = [{author:'Study Bot', text:'Welcome! Invite friends in the Friends tab and share key points or questions here while writing on your blank page.'}];
+  }
+  feed.innerHTML = msgs.map(m => `
+    <div class="chat-msg">
+      <strong>${escHtml(m.author)}</strong>
+      <span>${escHtml(m.text)}</span>
+    </div>
+  `).join('');
+  feed.scrollTop = feed.scrollHeight;
+}
+
+function sendStudyPrompt(){
+  const input = document.getElementById('studyChatInput');
+  const text = input.value.trim();
+  if(!text) return;
+  let msgs = [];
+  try{ msgs = JSON.parse(localStorage.getItem(STUDY_CHAT_KEY)) || []; }catch(e){}
+  const me = getUser() || 'You';
+  msgs.push({author: me, text});
+
+  const partner = document.getElementById('studyPartnerSelect').value;
+  if(partner){
+    const replies = [
+      `Got it! Adding "${text.slice(0,28)}..." to my revision notes too.`,
+      `Nice point! Let's highlight that on the blank page.`,
+      `Agreed — that's super important for board exams!`
+    ];
+    msgs.push({author: partner, text: replies[msgs.length % replies.length]});
+  }
+  localStorage.setItem(STUDY_CHAT_KEY, JSON.stringify(msgs.slice(-30)));
+  input.value = '';
+  renderStudyChat();
+}
+
+// ══════ POMODORO TIMER ══════
+let pomoSeconds = 25 * 60;
+let pomoInterval = null;
+
+function updatePomoDisplay(){
+  const m = String(Math.floor(pomoSeconds / 60)).padStart(2,'0');
+  const s = String(pomoSeconds % 60).padStart(2,'0');
+  const el = document.getElementById('pomoDisplay');
+  if(el) el.textContent = `${m}:${s}`;
+}
+
+function togglePomodoro(){
+  const btn = document.getElementById('pomoStartBtn');
+  if(pomoInterval){
+    clearInterval(pomoInterval);
+    pomoInterval = null;
+    btn.textContent = 'Start';
+  } else {
+    btn.textContent = 'Pause';
+    pomoInterval = setInterval(()=>{
+      if(pomoSeconds > 0){
+        pomoSeconds--;
+        updatePomoDisplay();
+      } else {
+        clearInterval(pomoInterval);
+        pomoInterval = null;
+        btn.textContent = 'Start';
+        showToast('🎉 25-minute study session complete!');
+      }
+    }, 1000);
+  }
+}
+
+function resetPomodoro(){
+  if(pomoInterval){
+    clearInterval(pomoInterval);
+    pomoInterval = null;
+  }
+  pomoSeconds = 25 * 60;
+  document.getElementById('pomoStartBtn').textContent = 'Start';
+  updatePomoDisplay();
+}
+
+// ══════ TOAST & ESCAPE ══════
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+function escHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+</script>
+</body>
+</html>
